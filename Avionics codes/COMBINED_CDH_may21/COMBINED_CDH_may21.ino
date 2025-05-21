@@ -33,14 +33,14 @@ String TotalData;
 
 String Header = "MAACM";
 String Footer = "0xB2";
-char OperMode = '1'; // opermode 1 - 6
+char OperMode = '6'; // opermode 1 - 6
 
 /*--- struct data for the ebyte mode of transmission idk this is just how it works its nice rin----*/
 SoftwareSerial ESerial(PIN_RX, PIN_TX);
 EBYTE Transceiver(&ESerial, PIN_M0, PIN_M1, PIN_AX);
 
 struct DATA {
-  char mode = '1';
+  char mode = '6';
   char DataPack[50];
 
 };
@@ -53,148 +53,88 @@ String receivedData;
 
 
 
-                          /*--Hex converter thingy---*/
-                          
-                          unsigned long hexCharToDec(char hexChar) {
-                            if (hexChar >= '0' && hexChar <= '9') {
-                              return hexChar - '0';
-                            } else if (hexChar >= 'A' && hexChar <= 'F') {
-                              return 10 + (hexChar - 'A');
-                            } else if (hexChar >= 'a' && hexChar <= 'f') {
-                              return 10 + (hexChar - 'a');
-                            }
-                            return 0; 
-                          }
-                          
-                          
-                          String stringAdd(String num1, String num2) {
-                            String result = "";
-                            int carry = 0;
-                            int i = num1.length() - 1;
-                            int j = num2.length() - 1;
-                          
-                            while (i >= 0 || j >= 0 || carry > 0) {
-                              int digit1 = (i >= 0) ? (num1.charAt(i) - '0') : 0;
-                              int digit2 = (j >= 0) ? (num2.charAt(j) - '0') : 0;
-                              int sum = digit1 + digit2 + carry;
-                              result = String(sum % 10) + result;
-                              carry = sum / 10;
-                              i--;
-                              j--;
-                            }
-                            return result;
-                          }
-                          
-                          
-                          String stringMultiplyDigit(String num, int digit) {
-                            if (digit == 0) {
-                              return "0";
-                            }
-                            String result = "";
-                            int carry = 0;
-                            for (int i = num.length() - 1; i >= 0; i--) {
-                              int currentDigit = num.charAt(i) - '0';
-                              int product = currentDigit * digit + carry;
-                              result = String(product % 10) + result;
-                              carry = product / 10;
-                            }
-                            if (carry > 0) {
-                              result = String(carry) + result;
-                            }
-                            return result;
-                          }
-                          
-                          
-                          String stringMultiplyPowerOf16(String num, int power) {
-                            if (power == 0) {
-                              return num;
-                            }
-                            for (int i = 0; i < power; i++) {
-                              num += "0";
-                            }
-                            return num;
-                          }
-                          
-                          
-                          String hexToDecimal(String hexInput) {
-                            if (hexInput == "0" || hexInput == "") {
-                              return "0";
-                            }
-                          
-                            String decimalString = "0";
-                            String currentPowerOf16 = "1"; 
-                          
+                          //*--Hex converter thingy---*/
                             
-                            if (hexInput.startsWith("0x") || hexInput.startsWith("0X")) {
-                              hexInput = hexInput.substring(2);
+                            unsigned long hexCharToDec(char hexChar) {
+                              if (hexChar >= '0' && hexChar <= '9') return hexChar - '0';
+                              else if (hexChar >= 'A' && hexChar <= 'F') return 10 + (hexChar - 'A');
+                              else if (hexChar >= 'a' && hexChar <= 'f') return 10 + (hexChar - 'a');
+                              return 0;
                             }
-                          
-                           
-                            hexInput.toUpperCase();
-                          
                             
-                            for (int i = hexInput.length() - 1; i >= 0; i--) {
-                              unsigned long hexDigitValue = hexCharToDec(hexInput.charAt(i));
-                          
-                              
-                              String termValue = stringMultiplyDigit(currentPowerOf16, hexDigitValue);
-                          
-                              
-                              decimalString = stringAdd(decimalString, termValue);
-                          
-                              
-                              currentPowerOf16 = stringMultiplyDigit(currentPowerOf16, 16);
+                            String stringAdd(String num1, String num2) {
+                              String result = "";
+                              int carry = 0;
+                              int i = num1.length() - 1, j = num2.length() - 1;
+                              while (i >= 0 || j >= 0 || carry > 0) {
+                                int digit1 = (i >= 0) ? (num1.charAt(i--) - '0') : 0;
+                                int digit2 = (j >= 0) ? (num2.charAt(j--) - '0') : 0;
+                                int sum = digit1 + digit2 + carry;
+                                result = char('0' + (sum % 10)) + result;
+                                carry = sum / 10;
+                              }
+                              return result;
                             }
-                          
-                            return decimalString;
-                          }
-                          
-                          String decimalToHex(String decimalInput) {
-                            if (decimalInput == "0") {
-                              return "0";
+                            
+                            String stringMultiplyDigit(String num, int digit) {
+                              if (digit == 0) return "0";
+                              String result = "";
+                              int carry = 0;
+                              for (int i = num.length() - 1; i >= 0; i--) {
+                                int currentDigit = num.charAt(i) - '0';
+                                int product = currentDigit * digit + carry;
+                                result = char('0' + (product % 10)) + result;
+                                carry = product / 10;
+                              }
+                              if (carry > 0) result = String(carry) + result;
+                              return result;
                             }
-                          
-                            String hexOutput = "";
-                            String quotient = decimalInput;
-                          
-                            while (quotient != "0") {
-                              int remainder = 0;
-                              String nextQuotient = "";
-                          
-                              
-                              for (int i = 0; i < quotient.length(); i++) {
-                                int digit = quotient.charAt(i) - '0';
-                                int current = remainder * 10 + digit; 
-                                remainder = current % 16;            
-                                nextQuotient += String(current / 16); 
-                              }
-                          
-                              
-                              while (nextQuotient.length() > 1 && nextQuotient.charAt(0) == '0') {
-                                nextQuotient = nextQuotient.substring(1);
-                              }
-                              
-                              if (nextQuotient.length() == 0) {
-                                nextQuotient = "0";
-                              }
-                          
-                             
-                              if (remainder < 10) {
-                                hexOutput = String(remainder) + hexOutput; // Prepend digit
-                              } else {
-                                hexOutput = String((char)('A' + (remainder - 10))) + hexOutput; // Prepend char A-F
-                              }
-                          
-                              quotient = nextQuotient; 
-                            }
-                          
-                            return hexOutput;
-                          }
-                          
-                          
-                            String largeDecimal = "";
+                            
+                            
+  String divideBy16(String number, int &remainderOut) {
+  String quotient = "";
+  int remainder = 0;
+
+  for (int i = 0; i < number.length(); i++) {
+    int current = remainder * 10 + (number.charAt(i) - '0');
+    quotient += String(current / 16);
+    remainder = current % 16;
+  }
+
+  // Trim leading zeros
+  int firstNonZero = 0;
+  while (firstNonZero < quotient.length() && quotient.charAt(firstNonZero) == '0') {
+    firstNonZero++;
+  }
+  if (firstNonZero == quotient.length()) {
+    quotient = "0";
+  } else {
+    quotient = quotient.substring(firstNonZero);
+  }
+
+  remainderOut = remainder;
+  return quotient;
+}
+
+String decimalToHex(String decimalInput) {
+  if (decimalInput == "0" || decimalInput.length() == 0) return "0";
+
+  String hexOutput = "";
+  String current = decimalInput;
+
+  while (current != "0") {
+    int remainder;
+    current = divideBy16(current, remainder);
+    char hexDigit = (remainder < 10) ? ('0' + remainder) : ('A' + remainder - 10);
+    hexOutput = hexDigit + hexOutput;
+  }
+
+  return hexOutput;
+}
+
+                             String largeDecimal = "";
                             String hexResult = decimalToHex(largeDecimal);
-                          /*--Hex converter thingy---*/
+
   
 void setup() {
   Serial.begin(9600);
@@ -243,9 +183,15 @@ void loop() {
             //    Serial.println("EPS: " + receivedData+ "\n\n");
             }
             
-  float battVolt = 80 ,battCur = 2.3, busvoltage = 0, shuntvoltage = 0;;
+  float battVolt,battCur, busvoltage = 0, shuntvoltage = 0;;
 
-  shuntvoltage = ina219.getShuntVoltage_mV();  busvoltage = ina219.getBusVoltage_V();  battCur = abs(ina219.getCurrent_mA());   battVolt = busvoltage + (shuntvoltage / 1000); battVolt*= 10;
+  shuntvoltage = ina219.getShuntVoltage_mV(); 
+  busvoltage = ina219.getBusVoltage_V(); 
+  battCur = abs(ina219.getCurrent_mA()); 
+  battCur/=10; // so if reading is 22 its .22 A 
+  //Serial.print("batcur: "); Serial.println(battCur);  
+  battVolt = busvoltage + (shuntvoltage / 1000);
+  battVolt*= 10; 
   
   int resets=0, Uplinkstatus = 0, MissionsStatus = 0, ImagesTaken = 0;
  
@@ -283,12 +229,12 @@ void loop() {
           Serial.println(OperMode);
 
             
-         // receivedData.remove(receivedData.length() - 1);
+         receivedData.remove(receivedData.length() - 1);
          //SPacers //putting '' shit to see if mag gawa ng shit
          
-          String BeaconData = Header + String((int)battVolt) + String((int)battCur) +  receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
+          String BeaconData = Header + String((int)battVolt) + String((int)battCur) +"'" + receivedData + "'" + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
           largeDecimal = String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
-          hexResult = "MAACM" +decimalToHex(largeDecimal);
+          hexResult = "MAACM" + decimalToHex(largeDecimal);
           hexResult.toCharArray(MyData.DataPack,50);
           Serial.print(hexResult);Serial.print(" ");Serial.print(BeaconData);Serial.print(" Beacon Data: "); Serial.println(MyData.DataPack); 
           
@@ -317,7 +263,7 @@ void loop() {
         if( OperMode == '6'){
           Serial.print("Operational Mode: ");
           Serial.println(OperMode);
-          
+          receivedData.remove(receivedData.length() - 1);
          String HKfulData = "HA" + secondsStr + minutesStr + hoursStr + "AA" +  String((int)battVolt) + String((int)battCur) +"'"+ receivedData + "'" + String(resets) + "FA"; // GPS KULANG
           largeDecimal = secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) + receivedData + String(resets);
           hexResult = "HA" + decimalToHex(largeDecimal) + "FA";
