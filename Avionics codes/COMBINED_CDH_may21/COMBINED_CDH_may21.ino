@@ -33,14 +33,14 @@ String TotalData;
 
 String Header = "MAACM";
 String Footer = "0xB2";
-char OperMode = '6'; // opermode 1 - 6
+char OperMode = '1'; // opermode 1 - 6
 
 /*--- struct data for the ebyte mode of transmission idk this is just how it works its nice rin----*/
 SoftwareSerial ESerial(PIN_RX, PIN_TX);
 EBYTE Transceiver(&ESerial, PIN_M0, PIN_M1, PIN_AX);
 
 struct DATA {
-  char mode = '6';
+  char mode = '1';
   char DataPack[50];
 
 };
@@ -284,7 +284,9 @@ void loop() {
 
             
          // receivedData.remove(receivedData.length() - 1);
-          String BeaconData = Header + String((int)battVolt) + String((int)battCur) + "'" + receivedData +"'" + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
+         //SPacers //putting '' shit to see if mag gawa ng shit
+         
+          String BeaconData = Header + String((int)battVolt) + String((int)battCur) +  receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
           largeDecimal = String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
           hexResult = "MAACM" +decimalToHex(largeDecimal);
           hexResult.toCharArray(MyData.DataPack,50);
@@ -316,9 +318,9 @@ void loop() {
           Serial.print("Operational Mode: ");
           Serial.println(OperMode);
           
-         String HKfulData = Header + secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) +"'"+ receivedData +"'"+ String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken) + Footer;
-          largeDecimal = secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
-          hexResult = "MAACM" + decimalToHex(largeDecimal) + "END";
+         String HKfulData = "HA" + secondsStr + minutesStr + hoursStr + "AA" +  String((int)battVolt) + String((int)battCur) +"'"+ receivedData + "'" + String(resets) + "FA"; // GPS KULANG
+          largeDecimal = secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) + receivedData + String(resets);
+          hexResult = "HA" + decimalToHex(largeDecimal) + "FA";
           hexResult.toCharArray(MyData.DataPack,50);
           Serial.print(hexResult);Serial.print(" ");Serial.print(HKfulData);Serial.print(" HK Data: "); Serial.println(MyData.DataPack); 
           
