@@ -1,7 +1,10 @@
 #include <SFE_BMP180.h>
 #include <MPU9250_asukiaaa.h>
 #include <Wire.h>
+#include <SoftwareSerial.h>
 
+
+SoftwareSerial ss(8, 9);
 
 SFE_BMP180 pressure;
 MPU9250_asukiaaa mySensor;
@@ -21,12 +24,75 @@ int Solar5Status = 0;
 
 String Sep = "";
 
-  
+                    String readNextGPGLL() {
+                      String currentSentence = "";
+                    
+                      while (true) {
+                        while (ss.available() > 0) {
+                          char c = ss.read();
+                          currentSentence += c;
+                    
+                          if (c == '\n') {
+                            if (currentSentence.startsWith("$GPGLL")) {
+                              return currentSentence;
+                            }
+                            currentSentence = "";
+                          }
+                        }
+                      }
+                    }
+
+                    float convertToDecimalDegrees(String raw, String direction) {
+                    if (raw.length() < 4) return 0.0;
+                  
+                    int dotIndex = raw.indexOf('.');
+                    int degreeDigits = (dotIndex > 2) ? dotIndex - 2 : 2;
+                    
+                    float degrees = raw.substring(0, degreeDigits).toFloat();
+                    float minutes = raw.substring(degreeDigits).toFloat();
+                  
+                    float decimal = degrees + (minutes / 60.0);
+                  
+                    if (direction == "S" || direction == "W") {
+                      decimal = -decimal;
+                    }
+                  
+                    return decimal;
+                  }
+                  
+                  String extractLatLongDecimal(String gpgll) {
+                    String fields[7];
+                    int index = 0;
+                    int start = 0;
+                  
+                    for (int i = 0; i < gpgll.length(); i++) {
+                      if (gpgll.charAt(i) == ',' || gpgll.charAt(i) == '*') {
+                        fields[index++] = gpgll.substring(start, i);
+                        start = i + 1;
+                      }
+                    }
+                  
+                    String latRaw = fields[1];
+                    String latDir = fields[2];
+                    String lonRaw = fields[3];
+                    String lonDir = fields[4];
+                  
+                    if (latRaw == "" || latDir == "" || lonRaw == "" || lonDir == "") {
+                      return "0";
+                    }
+                  
+                    float lat = convertToDecimalDegrees(latRaw, latDir);
+                    float lon = convertToDecimalDegrees(lonRaw, lonDir);
+                  
+                    return String(lat, 6) + "," + String(lon, 6);
+                  }
+                    
 
 
 void setup()
 { 
   Serial.begin(9600);
+  ss.begin(9600);
   pinMode(Solar1pin, INPUT_PULLUP);
   pinMode(Solar2pin, INPUT_PULLUP);
   pinMode(Solar3pin, INPUT_PULLUP);
@@ -46,14 +112,15 @@ void setup()
 void loop() {
   // put your main code here, to run repeatedly:
 
-  
+   String GPS = readNextGPGLL();
+   String latLongDecimal = extractLatLongDecimal(GPS);
 char status;
   double battTemp, battVolt=0, battCur=0;
   Solar1Status = digitalRead(Solar1pin);
   Solar2Status = digitalRead(Solar2pin);
   Solar3Status = digitalRead(Solar3pin);
   Solar4Status = digitalRead(Solar4pin);
-  Solar5Status = 5;// digitalRead(Solar5pin);
+  Solar5Status = digitalRead(Solar5pin);
   
                                                       mySensor.accelUpdate();
                                                         aX = mySensor.accelX();
@@ -99,7 +166,7 @@ char status;
     battVolt*= 10;
     battCur*=  10;
     //Serial.println(Solar5Status);
-    String EPSValues = String((int)battTemp) + String(Solar1Status) + String(Solar2Status) + String(Solar3Status) + String(Solar4Status) + String(Solar5Status) + adcsxStr + adcsyStr + adcszStr ; //times 10 batt volt and curr for no decimal PLace
+    String EPSValues = String((int)battTemp) + String(Solar1Status) + String(Solar2Status) + String(Solar3Status) + String(Solar4Status) + String(Solar5Status) + adcsxStr + adcsyStr + adcszStr + latLongDecimal ; //times 10 batt volt and curr for no decimal PLace
     Serial.println(EPSValues);
 
     delay(1000);
