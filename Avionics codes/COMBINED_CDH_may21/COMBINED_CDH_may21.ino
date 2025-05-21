@@ -1,5 +1,4 @@
 #include "Wire.h"
-#include <MPU6050_light.h>
 #include <I2C_RTC.h>
 #include <Adafruit_INA219.h>
 #include <SoftwareSerial.h>
@@ -14,7 +13,6 @@
 #define PIN_AX 6
 
 Adafruit_INA219 ina219;
-MPU6050 mpu6050(Wire);
 static DS3231 RTC;
 
 int Solar1pin = 13;
@@ -210,15 +208,6 @@ void setup() {
   Transceiver.SaveParameters(PERMANENT);
   Transceiver.PrintParameters();
 
-  byte status = mpu6050.begin();
-  Serial.print(F("MPU6050 status: "));
-  Serial.println(status);
- // while(status!=0){ } // stop everything if could not connect to MPU6050
-  
-  Serial.println(F("Calculating offsets, do not move MPU6050"));
-  delay(1000);
-  //mpu6050.calcOffsets(true,true); // gyro and accelero
-  Serial.println("Done!\n");
 
   if (! ina219.begin()) {
     Serial.println("Failed to find INA219 chip");
@@ -226,11 +215,8 @@ void setup() {
       //delay(10); 
   }
   
-  Serial.println("Failed to find INA219 chip");
-  
   RTC.begin();  
   RTC.setHourMode(CLOCK_H12);
- Serial.println("Failed to find INA219 chip");
   
 }
 
@@ -243,7 +229,7 @@ void loop() {
   
       Transceiver.SendStruct(&MyData, sizeof(MyData)); // sends the data struct its neat
   
-   mpu6050.update();
+ 
     //if (Serial.available()) {
       //  char UserInput = Serial.read();
         //if (UserInput != '\n' && UserInput != '\r') {
@@ -260,41 +246,13 @@ void loop() {
   float battVolt = 80 ,battCur = 2.3, busvoltage = 0, shuntvoltage = 0;;
 
   shuntvoltage = ina219.getShuntVoltage_mV();  busvoltage = ina219.getBusVoltage_V();  battCur = abs(ina219.getCurrent_mA());   battVolt = busvoltage + (shuntvoltage / 1000); battVolt*= 10;
- 
-  double ADCSX = mpu6050.getAccX(), ADCSY = mpu6050.getAccY(), ADCSZ = mpu6050.getAccZ();
   
   int resets=0, Uplinkstatus = 0, MissionsStatus = 0, ImagesTaken = 0;
  
        
     
     
-                                                    //--- makes the fucking accel values 1 decimal and removes the motherfucking decimal-----/////////
-                                                          ADCSX = abs(round(ADCSX * 10) / 10.0);
-                                                          ADCSY = abs(round(ADCSY * 10) / 10.0);
-                                                          ADCSZ = abs(round(ADCSZ * 10) / 10.0);
-                                                          
-                                                          int adcsxInt = (int)(ADCSX*10);
-                                                          int adcsyInt = (int)(ADCSY*10);
-                                                          int adcszInt = (int)(ADCSZ*10);
-                                                        
-                                                        String adcsxStr,adcsyStr,adcszStr;
-                                                        
-                                                        if (adcsxInt < 10 && adcsxInt >= 0) 
-                                                          adcsxStr = "0" + String(adcsxInt); 
-                                                        else 
-                                                          adcsxStr = String(adcsxInt);      
-                                                        
-                                                        
-                                                        if (adcsyInt < 10 && adcsyInt >= 0) 
-                                                          adcsyStr = "0" + String(adcsyInt); 
-                                                        else 
-                                                          adcsyStr = String(adcsyInt);      
-                                                        
-                                                        
-                                                        if (adcszInt < 10 && adcszInt >= 0) 
-                                                          adcszStr = "0" + String(adcszInt); 
-                                                        else 
-                                                          adcszStr = String(adcszInt);     
+                                                    /*--FOR RTC----*/
 
                                                         int secondss = RTC.getSeconds(), minutes = RTC.getMinutes(), hours = RTC.getHours();
                                                         String secondsStr, minutesStr, hoursStr;
@@ -314,7 +272,7 @@ void loop() {
                                                         else
                                                           hoursStr = String(hours);
                                                         
-
+                                                         /*--FOR RTC----*/
 
 
         //1 = Nominal Mode; 2 = Power Saving Mode; 3 = Emergency Mode; 4 = Capture Mode; 5 = Image Data Downlink; 6 = HK Telemetry Downlink
@@ -326,8 +284,8 @@ void loop() {
 
             
          // receivedData.remove(receivedData.length() - 1);
-          String BeaconData = Header + String((int)battVolt) + String((int)battCur) + "'" + receivedData +"'" + String(resets) + adcsxStr + adcsyStr + adcszStr + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
-          largeDecimal = String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + adcsxStr + adcsyStr + adcszStr + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
+          String BeaconData = Header + String((int)battVolt) + String((int)battCur) + "'" + receivedData +"'" + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
+          largeDecimal = String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
           hexResult = "MAACM" +decimalToHex(largeDecimal);
           hexResult.toCharArray(MyData.DataPack,50);
           Serial.print(hexResult);Serial.print(" ");Serial.print(BeaconData);Serial.print(" Beacon Data: "); Serial.println(MyData.DataPack); 
@@ -335,32 +293,31 @@ void loop() {
         }
     
         if( OperMode == '2'){
-          Serial.print("Operational Mode: ");
-          Serial.println(mpu6050.getAccX());
+          Serial.print("Operational Mode: ");Serial.println(OperMode);
+          
           
         }
         
         if( OperMode == '3'){
-          Serial.print("Operational Mode: ");
-          Serial.println(OperMode);
+          Serial.print("Operational Mode: ");Serial.println(OperMode);
+        
         }
         
         if( OperMode == '4'){
-          Serial.print("Operational Mode: ");
-          Serial.println(OperMode);
+          Serial.print("Operational Mode: ");Serial.println(OperMode);
+         
         }
         
         if( OperMode == '5'){
-          Serial.print("Operational Mode: ");
-          Serial.println(OperMode);
+          Serial.print("Operational Mode: "); Serial.println(OperMode);
         }
         
         if( OperMode == '6'){
           Serial.print("Operational Mode: ");
           Serial.println(OperMode);
           
-         String HKfulData = Header + secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) +"'"+ receivedData +"'"+ String(resets) + adcsxStr + adcsyStr + adcszStr + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken) + Footer;
-          largeDecimal = secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + adcsxStr + adcsyStr + adcszStr + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
+         String HKfulData = Header + secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) +"'"+ receivedData +"'"+ String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken) + Footer;
+          largeDecimal = secondsStr + minutesStr + hoursStr +  String((int)battVolt) + String((int)battCur) + receivedData + String(resets) + String(Uplinkstatus) + String(MissionsStatus) + String(ImagesTaken);
           hexResult = "MAACM" + decimalToHex(largeDecimal) + "END";
           hexResult.toCharArray(MyData.DataPack,50);
           Serial.print(hexResult);Serial.print(" ");Serial.print(HKfulData);Serial.print(" HK Data: "); Serial.println(MyData.DataPack); 
