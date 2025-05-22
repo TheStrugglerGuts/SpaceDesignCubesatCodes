@@ -75,12 +75,25 @@ void setup() {
   Transceiver.init();
   Transceiver.PrintParameters();
 }
-
+char OperMode = '1';
 void loop() {
+
+  if (Serial.available()) {
+        char UserInput = Serial.read();
+        if (UserInput != '\n' && UserInput != '\r') {
+        OperMode = UserInput;
+        while(1){
+        Transceiver.SendStruct(&MyData, sizeof(MyData));
+        delay(500);
+        break;
+        }
+       }
+    }
   static String content = "";
   static int startIndex = -1, endIndex = -1;
 
   if (ESerial.available()) {
+  
     Transceiver.GetStruct(&MyData, sizeof(MyData));
 
     Serial.print("CUBESAT RAW:,");
@@ -88,7 +101,7 @@ void loop() {
 
     String dataStr = String(MyData.DataPack);
     content = "";
-
+    MyData.mode = OperMode;
     if (MyData.mode == '6') {
       startIndex = dataStr.indexOf("HA");
       endIndex = dataStr.indexOf("FA");

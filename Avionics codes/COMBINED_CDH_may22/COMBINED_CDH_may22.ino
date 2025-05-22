@@ -32,15 +32,14 @@ int Solar5Status = 0;
 String TotalData;
 
 String Header = "MAACM";
-String Footer = "0xB2";
-char OperMode = '6'; // opermode 1 - 6
+char OperMode = '1'; // opermode 1 - 6
 
 /*--- struct data for the ebyte mode of transmission idk this is just how it works its nice rin----*/
 SoftwareSerial ESerial(PIN_RX, PIN_TX);
 EBYTE Transceiver(&ESerial, PIN_M0, PIN_M1, PIN_AX);
 
 struct DATA {
-  char mode = '6';
+  char Mode = '1';
   char DataPack[50];
 
 };
@@ -142,6 +141,9 @@ void setup() {
   ESerial.begin(9600);
   Serial.println("Starting Sender");
 
+
+  pinMode(9,OUTPUT);
+  digitalWrite(9,LOW);
   Transceiver.init();
   Chan = 5;
   Transceiver.SetChannel(Chan);
@@ -164,11 +166,16 @@ void setup() {
 
 
 void loop() {
-  MyData.mode = OperMode;
+  OperMode = MyData.Mode;
   //strcpy(MyData.DataPack,"asds");
   
-      Transceiver.SendStruct(&MyData, sizeof(MyData)); // sends the data struct its neat
-  
+   if (Transceiver.available()) 
+  Transceiver.GetStruct(&MyData, sizeof(MyData)); 
+ Serial.print("Operational Mode: ");
+          Serial.println(OperMode);
+
+    //  delay(500);
+  OperMode = MyData.Mode;
  
     //if (Serial.available()) {
       //  char UserInput = Serial.read();
@@ -253,7 +260,14 @@ void loop() {
         
         if( OperMode == '4'){
           Serial.print("Operational Mode: ");Serial.println(OperMode);
+         Serial.println("Taking image...");
          
+         digitalWrite(9,HIGH);
+         delay(10000);
+         Serial.println("Image Taken, Returning to Beacon Mode.");
+         MyData.Mode = '1';
+         OperMode = '1';
+         digitalWrite(9,LOW);
         }
         
         if( OperMode == '5'){
@@ -273,7 +287,7 @@ void loop() {
           
         }    
 
-
+Transceiver.SendStruct(&MyData, sizeof(MyData)); 
   delay(1000);
 
 }
