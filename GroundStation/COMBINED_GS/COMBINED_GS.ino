@@ -8,7 +8,7 @@
 #define PIN_AX 6
 
 struct DATA {
-  char mode = '1';
+  char mode = '6';
   char DataPack[50];
 };
 

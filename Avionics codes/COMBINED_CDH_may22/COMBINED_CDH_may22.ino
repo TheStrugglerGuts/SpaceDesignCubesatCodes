@@ -32,14 +32,14 @@ int Solar5Status = 0;
 String TotalData;
 
 String Header = "MAACM";
-char OperMode = '1'; // opermode 1 - 6
+char OperMode = '6'; // opermode 1 - 6
 
 /*--- struct data for the ebyte mode of transmission idk this is just how it works its nice rin----*/
 SoftwareSerial ESerial(PIN_RX, PIN_TX);
 EBYTE Transceiver(&ESerial, PIN_M0, PIN_M1, PIN_AX);
 
 struct DATA {
-  char Mode = '1';
+  char Mode = '6';
   char DataPack[50];
 
 };
@@ -166,6 +166,7 @@ void setup() {
 
 
 void loop() {
+  //delay(60000);
   digitalWrite(9,LOW);
   OperMode = MyData.Mode;
   //strcpy(MyData.DataPack,"asds");
