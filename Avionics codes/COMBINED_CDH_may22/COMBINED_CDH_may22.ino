@@ -166,6 +166,7 @@ void setup() {
 
 
 void loop() {
+  digitalWrite(9,LOW);
   OperMode = MyData.Mode;
   //strcpy(MyData.DataPack,"asds");
   
